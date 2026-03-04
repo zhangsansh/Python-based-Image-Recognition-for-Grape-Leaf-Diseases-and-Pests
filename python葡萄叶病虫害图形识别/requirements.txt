@@ -1,0 +1,13 @@
+flask
+flask-cors
+tensorflow
+keras
+efficientnet_pytorch
+pillow
+opencv-python
+numpy
+matplotlib
+scikit-learn
+pandas
+tqdm
+requests

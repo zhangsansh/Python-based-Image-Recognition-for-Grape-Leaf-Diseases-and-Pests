@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>葡萄叶病虫害智能识别系统</title>
+    <!-- 引入Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 引入Font Awesome图标 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 自定义样式 -->
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-top: 50px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            background: white;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: none;
+        }
+        .card-body {
+            padding: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #6c757d;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+        .upload-area:hover {
+            border-color: #4facfe;
+            background-color: #e3f2fd;
+        }
+        .upload-icon {
+            font-size: 50px;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+        .result-card {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .progress {
+            height: 25px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            transition: width 1.5s ease-in-out;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+        }
+        .loading-spinner {
+            display: none;
+            margin: 20px auto;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .advice-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 5px 5px 0;
+        }
+        .model-selector {
+            margin-bottom: 20px;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .about-section {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+        }
+        .disease-info {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+        .disease-card {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h1><i class="fa fa-leaf"></i> 葡萄叶病虫害智能识别系统</h1>
+                <p class="lead">基于深度学习的葡萄叶片健康状况快速诊断工具</p>
+            </div>
+            <div class="card-body">
+                <!-- 模型选择器 -->
+                <div class="model-selector">
+                    <label for="model" class="form-label font-weight-bold">选择识别模型：</label>
+                    <select id="model" class="form-select form-select-lg">
+                        <option value="efficientnet">EfficientNet (推荐)</option>
+                        <option value="mobilenet">MobileNetV3</option>
+                    </select>
+                </div>
+                
+                <!-- 上传区域 -->
+                <div id="upload-area" class="upload-area">
+                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                    <div class="upload-icon"><i class="fa fa-cloud-upload"></i></div>
+                    <h3>点击或拖拽上传葡萄叶图像</h3>
+                    <p>支持 PNG, JPG, JPEG, GIF 格式</p>
+                </div>
+                
+                <!-- 加载指示器 -->
+                <div id="loading-spinner" class="loading-spinner"></div>
+                
+                <!-- 图像预览 -->
+                <div id="image-preview-container" style="display: none;">
+                    <h3 class="mt-4">上传图像预览：</h3>
+                    <img id="image-preview" class="image-preview" src="" alt="上传的图像">
+                </div>
+                
+                <!-- 识别结果 -->
+                <div id="result-container" style="display: none;">
+                    <div class="result-card">
+                        <h3 class="text-center mb-4"><i class="fa fa-check-circle"></i> 识别结果</h3>
+                        
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">预测类别：</label>
+                            <div id="predicted-class" class="p-2 bg-primary bg-opacity-10 rounded"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">置信度：</label>
+                            <div class="progress">
+                                <div id="confidence-bar" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div id="confidence-text" class="text-right mt-1"></div>
+                        </div>
+                        
+                        <div class="advice-box">
+                            <h4><i class="fa fa-lightbulb-o"></i> 防治建议：</h4>
+                            <div id="prevention-advice" class="whitespace-pre-line"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 错误信息 -->
+                <div id="error-container" class="result-card text-danger" style="display: none;">
+                    <h3 class="text-center mb-4"><i class="fa fa-exclamation-circle"></i> 错误</h3>
+                    <div id="error-message"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 关于和说明部分 -->
+        <div class="about-section">
+            <h3><i class="fa fa-info-circle"></i> 关于系统</h3>
+            <p>本系统基于深度学习技术，能够自动识别葡萄叶片上的常见病害，包括霜霉病、白粉病、黑腐病等。系统使用EfficientNet和MobileNetV3等先进的深度学习模型，通过分析叶片图像特征，快速准确地诊断病害类型，并提供专业的防治建议。</p>
+            
+            <div class="disease-info">
+                <h4><i class="fa fa-book"></i> 常见葡萄叶病害信息</h4>
+                
+                <div class="disease-card">
+                    <h5><span class="badge bg-danger">霜霉病</span></h5>
+                    <p>症状：叶片正面出现淡黄色或黄褐色斑点，背面产生白色霜霉层。</p>
+                </div>
+                
+                <div class="disease-card">
+                    <h5><span class="badge bg-warning">白粉病</span></h5>
+                    <p>症状：叶片表面覆盖白色粉末状物质，后期病斑变为褐色。</p>
+                </div>
+                
+                <div class="disease-card">
+                    <h5><span class="badge bg-dark">黑腐病</span></h5>
+                    <p>症状：叶片出现褐色或黑色斑点，逐渐扩大并导致叶片坏死。</p>
+                </div>
+                
+                <div class="disease-card">
+                    <h5><span class="badge bg-success">健康叶片</span></h5>
+                    <p>症状：叶片颜色均匀，无斑点、霉层或其他异常现象。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 引入jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- 引入Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 自定义JavaScript -->
+    <script>
+        $(document).ready(function() {
+            // 上传区域点击事件
+            $('#upload-area').click(function() {
+                $('#file-input').click();
+            });
+            
+            // 拖拽上传支持
+            $('#upload-area').on('dragover', function(e) {
+                e.preventDefault();
+                $(this).css('border-color', '#4facfe');
+                $(this).css('background-color', '#e3f2fd');
+            });
+            
+            $('#upload-area').on('dragleave', function() {
+                $(this).css('border-color', '#6c757d');
+                $(this).css('background-color', '#f8f9fa');
+            });
+            
+            $('#upload-area').on('drop', function(e) {
+                e.preventDefault();
+                $(this).css('border-color', '#6c757d');
+                $(this).css('background-color', '#f8f9fa');
+                
+                if (e.originalEvent.dataTransfer.files.length) {
+                    $('#file-input')[0].files = e.originalEvent.dataTransfer.files;
+                    handleFileUpload();
+                }
+            });
+            
+            // 文件选择事件
+            $('#file-input').change(function() {
+                handleFileUpload();
+            });
+            
+            // 处理文件上传
+            function handleFileUpload() {
+                const file = $('#file-input')[0].files[0];
+                if (!file) return;
+                
+                // 显示图像预览
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#image-preview').attr('src', e.target.result);
+                    $('#image-preview-container').show();
+                };
+                reader.readAsDataURL(file);
+                
+                // 隐藏之前的结果和错误
+                $('#result-container').hide();
+                $('#error-container').hide();
+                
+                // 显示加载指示器
+                $('#loading-spinner').show();
+                
+                // 准备FormData对象
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('model', $('#model').val());
+                
+                // 发送AJAX请求到服务器
+                $.ajax({
+                    url: '/predict',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        // 隐藏加载指示器
+                        $('#loading-spinner').hide();
+                        
+                        if (response.success) {
+                            // 显示结果
+                            $('#predicted-class').text(response.predicted_class);
+                            
+                            // 设置置信度进度条
+                            const confidencePercentage = Math.round(response.confidence * 100);
+                            $('#confidence-bar').css('width', confidencePercentage + '%');
+                            $('#confidence-bar').attr('aria-valuenow', confidencePercentage);
+                            $('#confidence-text').text(confidencePercentage + '%');
+                            
+                            // 设置防治建议
+                            $('#prevention-advice').text(response.advice);
+                            
+                            // 显示结果容器
+                            $('#result-container').show();
+                        } else {
+                            // 显示错误信息
+                            $('#error-message').text(response.error);
+                            $('#error-container').show();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        // 隐藏加载指示器
+                        $('#loading-spinner').hide();
+                        
+                        // 显示错误信息
+                        $('#error-message').text('服务器错误: ' + error);
+                        $('#error-container').show();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
